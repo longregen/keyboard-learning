@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moonlander Dvorak Layout - Vi/Tmux/Browser Optimized</title>
+    <style>
+        :root {
+            --key-bg: #2d2d2d;
+            --key-border: #444;
+            --key-text: #fff;
+            --key-secondary: #888;
+            --key-hover: #3d3d3d;
+            --key-active: #4a9eff;
+            --layer-base: #2d2d2d;
+            --layer-altgr: #4a3d6a;
+            --layer-alt: #3d5a4a;
+            --layer-nav: #5a4a3d;
+            --layer-symbol: #3d4a5a;
+            --layer-fn: #5a3d4a;
+            --accent-red: #ff6b6b;
+            --accent-green: #69db7c;
+            --accent-blue: #4dabf7;
+            --accent-yellow: #ffd43b;
+            --accent-purple: #da77f2;
+            --accent-orange: #ff922b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            background: #1a1a1a;
+            color: var(--key-text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--key-secondary);
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .layer-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--key-border);
+            background: var(--key-bg);
+            color: var(--key-text);
+            cursor: pointer;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .layer-btn:hover {
+            background: var(--key-hover);
+        }
+
+        .layer-btn.active {
+            border-color: var(--key-active);
+            background: var(--key-active);
+            color: #000;
+        }
+
+        .layer-btn[data-layer="base"] { border-left: 4px solid var(--layer-base); }
+        .layer-btn[data-layer="altgr"] { border-left: 4px solid var(--layer-altgr); }
+        .layer-btn[data-layer="alt"] { border-left: 4px solid var(--layer-alt); }
+        .layer-btn[data-layer="nav"] { border-left: 4px solid var(--layer-nav); }
+        .layer-btn[data-layer="symbol"] { border-left: 4px solid var(--layer-symbol); }
+        .layer-btn[data-layer="fn"] { border-left: 4px solid var(--layer-fn); }
+
+        .keyboard-container {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin: 30px auto;
+            max-width: 1400px;
+        }
+
+        .half {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .half.right {
+            transform: scaleX(1);
+        }
+
+        .row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .key {
+            width: 60px;
+            height: 54px;
+            background: var(--key-bg);
+            border: 2px solid var(--key-border);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            user-select: none;
+        }
+
+        .key:hover {
+            background: var(--key-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .key:active, .key.pressed {
+            background: var(--key-active);
+            transform: translateY(0);
+        }
+
+        .key.modifier {
+            background: #3a3a4a;
+        }
+
+        .key.thumb {
+            background: #2a3a4a;
+        }
+
+        .key.layer-switch {
+            background: #4a3a3a;
+        }
+
+        .key.special {
+            background: #3a4a3a;
+        }
+
+        .key .main {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .key .secondary {
+            font-size: 10px;
+            color: var(--key-secondary);
+            margin-top: 2px;
+        }
+
+        .key .corner-tl {
+            position: absolute;
+            top: 3px;
+            left: 5px;
+            font-size: 9px;
+            color: var(--accent-purple);
+        }
+
+        .key .corner-tr {
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            font-size: 9px;
+            color: var(--accent-blue);
+        }
+
+        .key .corner-bl {
+            position: absolute;
+            bottom: 3px;
+            left: 5px;
+            font-size: 9px;
+            color: var(--accent-green);
+        }
+
+        .key .corner-br {
+            position: absolute;
+            bottom: 3px;
+            right: 5px;
+            font-size: 9px;
+            color: var(--accent-orange);
+        }
+
+        .key-1u { width: 60px; }
+        .key-1-25u { width: 77px; }
+        .key-1-5u { width: 94px; }
+        .key-2u { width: 128px; }
+
+        .thumb-cluster {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 20px;
+        }
+
+        .thumb-row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .left .thumb-cluster {
+            margin-left: auto;
+            align-items: flex-end;
+        }
+
+        .right .thumb-cluster {
+            margin-right: auto;
+            align-items: flex-start;
+        }
+
+        .thumb-big {
+            width: 60px;
+            height: 80px;
+        }
+
+        /* Test area */
+        .test-area {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background: var(--key-bg);
+            border-radius: 8px;
+            border: 2px solid var(--key-border);
+        }
+
+        .test-area h3 {
+            margin-bottom: 10px;
+        }
+
+        .test-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-family: inherit;
+            background: #1a1a1a;
+            border: 2px solid var(--key-border);
+            border-radius: 6px;
+            color: var(--key-text);
+            margin-bottom: 10px;
+        }
+
+        .test-input:focus {
+            outline: none;
+            border-color: var(--key-active);
+        }
+
+        .key-display {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            min-height: 40px;
+            padding: 10px;
+            background: #222;
+            border-radius: 6px;
+        }
+
+        .key-display .pressed-key {
+            padding: 5px 12px;
+            background: var(--key-active);
+            color: #000;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Legend */
+        .legend {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background: var(--key-bg);
+            border-radius: 8px;
+            border: 2px solid var(--key-border);
+        }
+
+        .legend h3 {
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--key-border);
+            padding-bottom: 10px;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .legend-section h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+
+        .legend-section ul {
+            list-style: none;
+        }
+
+        .legend-section li {
+            padding: 4px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .legend-section .key-ref {
+            background: #3a3a3a;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Reference tables */
+        .reference {
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        .reference h3 {
+            margin-bottom: 15px;
+        }
+
+        .ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .ref-table th, .ref-table td {
+            padding: 10px;
+            border: 1px solid var(--key-border);
+            text-align: left;
+        }
+
+        .ref-table th {
+            background: #3a3a3a;
+        }
+
+        .ref-table tr:nth-child(even) {
+            background: #252525;
+        }
+
+        /* Editor */
+        .editor {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background: var(--key-bg);
+            border-radius: 8px;
+            border: 2px solid var(--key-border);
+        }
+
+        .editor h3 {
+            margin-bottom: 15px;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .editor-btn {
+            padding: 8px 16px;
+            background: #3a3a3a;
+            border: 1px solid var(--key-border);
+            color: var(--key-text);
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .editor-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .editor-btn.primary {
+            background: var(--key-active);
+            color: #000;
+        }
+
+        .selected-key-info {
+            padding: 15px;
+            background: #222;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .key-editor-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: var(--key-secondary);
+        }
+
+        .form-group input {
+            padding: 8px;
+            background: #1a1a1a;
+            border: 1px solid var(--key-border);
+            border-radius: 4px;
+            color: var(--key-text);
+            font-family: inherit;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+                padding: 10px;
+            }
+
+            .controls, .test-area, .editor {
+                display: none;
+            }
+
+            .key {
+                background: white;
+                border: 1px solid #333;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .key .main {
+                color: black;
+            }
+
+            .key .secondary {
+                color: #666;
+            }
+
+            .key.modifier, .key.thumb, .key.layer-switch, .key.special {
+                background: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .legend, .reference {
+                page-break-before: always;
+            }
+
+            .keyboard-container {
+                gap: 30px;
+            }
+
+            h1 {
+                font-size: 1.4em;
+            }
+        }
+
+        /* Layer indicators */
+        .layer-indicator {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: var(--key-bg);
+            border-radius: 6px;
+        }
+
+        .current-layer {
+            font-weight: bold;
+            color: var(--key-active);
+        }
+
+        /* Color coding for key types */
+        .key[data-type="letter"] { border-bottom: 3px solid var(--accent-blue); }
+        .key[data-type="number"] { border-bottom: 3px solid var(--accent-green); }
+        .key[data-type="symbol"] { border-bottom: 3px solid var(--accent-purple); }
+        .key[data-type="modifier"] { border-bottom: 3px solid var(--accent-orange); }
+        .key[data-type="navigation"] { border-bottom: 3px solid var(--accent-yellow); }
+        .key[data-type="function"] { border-bottom: 3px solid var(--accent-red); }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .keyboard-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+            }
+
+            .key {
+                width: 50px;
+                height: 46px;
+            }
+
+            .key .main {
+                font-size: 14px;
+            }
+
+            .key-1-5u { width: 78px; }
+            .key-2u { width: 106px; }
+        }
+
+        .info-banner {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #2a3a4a 0%, #3a2a4a 100%);
+            border-radius: 8px;
+            border-left: 4px solid var(--key-active);
+        }
+
+        .info-banner p {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+
+        .info-banner code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Moonlander Dvorak Layout</h1>
+    <p class="subtitle">Vi/Tmux/Browser Optimized with AltGr International Characters</p>
+
+    <div class="info-banner">
+        <p><strong>Layer Philosophy:</strong> Dvorak base for efficient typing, AltGr for international characters (Spanish/German), Alt for vi-motions, dedicated navigation and symbol layers.</p>
+        <p><strong>Key Combos:</strong> <code>Alt+HJKL</code> = arrows, <code>AltGr+vowel</code> = accented, <code>Thumb+Nav</code> = navigation layer</p>
+    </div>
+
+    <div class="controls">
+        <button class="layer-btn active" data-layer="base">Base (Dvorak)</button>
+        <button class="layer-btn" data-layer="altgr">AltGr (Intl)</button>
+        <button class="layer-btn" data-layer="alt">Alt (Vi)</button>
+        <button class="layer-btn" data-layer="nav">Nav</button>
+        <button class="layer-btn" data-layer="symbol">Symbol</button>
+        <button class="layer-btn" data-layer="fn">Fn/Media</button>
+    </div>
+
+    <div class="layer-indicator">
+        Current Layer: <span class="current-layer">Base (Dvorak)</span>
+    </div>
+
+    <div class="keyboard-container">
+        <!-- Left Half -->
+        <div class="half left">
+            <div class="row" id="left-row-0"></div>
+            <div class="row" id="left-row-1"></div>
+            <div class="row" id="left-row-2"></div>
+            <div class="row" id="left-row-3"></div>
+            <div class="thumb-cluster" id="left-thumb"></div>
+        </div>
+
+        <!-- Right Half -->
+        <div class="half right">
+            <div class="row" id="right-row-0"></div>
+            <div class="row" id="right-row-1"></div>
+            <div class="row" id="right-row-2"></div>
+            <div class="row" id="right-row-3"></div>
+            <div class="thumb-cluster" id="right-thumb"></div>
+        </div>
+    </div>
+
+    <div class="test-area">
+        <h3>Test Your Layout</h3>
+        <p style="margin-bottom: 10px; color: var(--key-secondary);">Type below to see key mappings. Press modifiers to switch layers.</p>
+        <input type="text" class="test-input" id="testInput" placeholder="Start typing to test..." autofocus>
+        <div class="key-display" id="keyDisplay"></div>
+    </div>
+
+    <div class="editor">
+        <h3>Key Editor</h3>
+        <div class="editor-controls">
+            <button class="editor-btn" onclick="exportLayout()">Export JSON</button>
+            <button class="editor-btn" onclick="importLayout()">Import JSON</button>
+            <button class="editor-btn" onclick="resetLayout()">Reset to Default</button>
+            <button class="editor-btn primary" onclick="window.print()">Print Layout</button>
+        </div>
+        <div class="selected-key-info" id="selectedKeyInfo">
+            Click on any key to edit it
+        </div>
+        <div class="key-editor-form" id="keyEditorForm" style="display: none;">
+            <div class="form-group">
+                <label>Base Layer</label>
+                <input type="text" id="editBase" placeholder="Key character">
+            </div>
+            <div class="form-group">
+                <label>Shift</label>
+                <input type="text" id="editShift" placeholder="Shifted character">
+            </div>
+            <div class="form-group">
+                <label>AltGr</label>
+                <input type="text" id="editAltGr" placeholder="AltGr character">
+            </div>
+            <div class="form-group">
+                <label>Alt (Vi)</label>
+                <input type="text" id="editAlt" placeholder="Alt action">
+            </div>
+            <button class="editor-btn primary" onclick="saveKeyEdit()" style="margin-top: 10px;">Save Changes</button>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h3>Quick Reference</h3>
+        <div class="legend-grid">
+            <div class="legend-section">
+                <h4>Vi-Motions (Alt Layer)</h4>
+                <ul>
+                    <li><span class="key-ref">Alt+H</span> Left Arrow</li>
+                    <li><span class="key-ref">Alt+J</span> Down Arrow</li>
+                    <li><span class="key-ref">Alt+K</span> Up Arrow</li>
+                    <li><span class="key-ref">Alt+L</span> Right Arrow</li>
+                    <li><span class="key-ref">Alt+W</span> Word Forward</li>
+                    <li><span class="key-ref">Alt+B</span> Word Back</li>
+                    <li><span class="key-ref">Alt+0</span> Home</li>
+                    <li><span class="key-ref">Alt+$</span> End</li>
+                    <li><span class="key-ref">Alt+G</span> Ctrl+Home (Top)</li>
+                    <li><span class="key-ref">Alt+Shift+G</span> Ctrl+End (Bottom)</li>
+                </ul>
+            </div>
+            <div class="legend-section">
+                <h4>Spanish Characters (AltGr)</h4>
+                <ul>
+                    <li><span class="key-ref">AltGr+A</span> á</li>
+                    <li><span class="key-ref">AltGr+E</span> é</li>
+                    <li><span class="key-ref">AltGr+I</span> í</li>
+                    <li><span class="key-ref">AltGr+O</span> ó</li>
+                    <li><span class="key-ref">AltGr+U</span> ú</li>
+                    <li><span class="key-ref">AltGr+N</span> ñ</li>
+                    <li><span class="key-ref">AltGr+?</span> ¿</li>
+                    <li><span class="key-ref">AltGr+!</span> ¡</li>
+                </ul>
+            </div>
+            <div class="legend-section">
+                <h4>German Characters (AltGr)</h4>
+                <ul>
+                    <li><span class="key-ref">AltGr+Shift+A</span> ä</li>
+                    <li><span class="key-ref">AltGr+Shift+O</span> ö</li>
+                    <li><span class="key-ref">AltGr+Shift+U</span> ü</li>
+                    <li><span class="key-ref">AltGr+S</span> ß</li>
+                    <li><span class="key-ref">AltGr+Shift+S</span> ẞ (capital)</li>
+                </ul>
+            </div>
+            <div class="legend-section">
+                <h4>Tmux Shortcuts (Thumb)</h4>
+                <ul>
+                    <li><span class="key-ref">Prefix</span> Ctrl+A (configurable)</li>
+                    <li><span class="key-ref">Nav+H/J/K/L</span> Pane navigation</li>
+                    <li><span class="key-ref">Nav+N</span> Next window</li>
+                    <li><span class="key-ref">Nav+P</span> Prev window</li>
+                    <li><span class="key-ref">Nav+C</span> New window</li>
+                    <li><span class="key-ref">Nav+V</span> Vertical split</li>
+                    <li><span class="key-ref">Nav+S</span> Horizontal split</li>
+                </ul>
+            </div>
+            <div class="legend-section">
+                <h4>Browser Shortcuts</h4>
+                <ul>
+                    <li><span class="key-ref">Nav+T</span> New tab</li>
+                    <li><span class="key-ref">Nav+W</span> Close tab</li>
+                    <li><span class="key-ref">Nav+[/]</span> Tab left/right</li>
+                    <li><span class="key-ref">Nav+R</span> Reload</li>
+                    <li><span class="key-ref">Nav+L</span> Address bar</li>
+                    <li><span class="key-ref">Nav+F</span> Find</li>
+                    <li><span class="key-ref">Nav+D</span> Bookmark</li>
+                </ul>
+            </div>
+            <div class="legend-section">
+                <h4>Vim Extras</h4>
+                <ul>
+                    <li><span class="key-ref">Esc</span> Left thumb (easy access)</li>
+                    <li><span class="key-ref">:</span> Command mode (Shift+;)</li>
+                    <li><span class="key-ref">Nav+/</span> Search</li>
+                    <li><span class="key-ref">Nav+U</span> Undo</li>
+                    <li><span class="key-ref">Nav+Shift+U</span> Redo</li>
+                    <li><span class="key-ref">Nav+Y</span> Yank line</li>
+                    <li><span class="key-ref">Nav+P</span> Paste</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="reference">
+        <h3>Complete Layer Reference</h3>
+
+        <h4 style="margin: 20px 0 10px; color: var(--accent-blue);">Base Layer (Dvorak)</h4>
+        <table class="ref-table">
+            <tr>
+                <th>Position</th>
+                <th>Key</th>
+                <th>Shift</th>
+                <th>Notes</th>
+            </tr>
+            <tr><td>Top Row</td><td>= 1 2 3 4 5</td><td>+ ! @ # $ %</td><td>Numbers in standard position</td></tr>
+            <tr><td>Home Row Left</td><td>' , . p y</td><td>" &lt; &gt; P Y</td><td>Dvorak vowels on left</td></tr>
+            <tr><td>Home Row Right</td><td>f g c r l /</td><td>F G C R L ?</td><td>Common consonants</td></tr>
+            <tr><td>Bottom Row Left</td><td>a o e u i</td><td>A O E U I</td><td>Home position vowels</td></tr>
+            <tr><td>Bottom Row Right</td><td>d h t n s -</td><td>D H T N S _</td><td>HJKL for vi!</td></tr>
+        </table>
+
+        <h4 style="margin: 20px 0 10px; color: var(--accent-purple);">AltGr Layer (International)</h4>
+        <table class="ref-table">
+            <tr>
+                <th>Key</th>
+                <th>AltGr</th>
+                <th>AltGr+Shift</th>
+                <th>Language</th>
+            </tr>
+            <tr><td>A</td><td>á</td><td>ä</td><td>Spanish/German</td></tr>
+            <tr><td>E</td><td>é</td><td>ë</td><td>Spanish</td></tr>
+            <tr><td>I</td><td>í</td><td>ï</td><td>Spanish</td></tr>
+            <tr><td>O</td><td>ó</td><td>ö</td><td>Spanish/German</td></tr>
+            <tr><td>U</td><td>ú</td><td>ü</td><td>Spanish/German</td></tr>
+            <tr><td>N</td><td>ñ</td><td>Ñ</td><td>Spanish</td></tr>
+            <tr><td>S</td><td>ß</td><td>ẞ</td><td>German</td></tr>
+            <tr><td>?</td><td>¿</td><td>-</td><td>Spanish</td></tr>
+            <tr><td>!</td><td>¡</td><td>-</td><td>Spanish</td></tr>
+            <tr><td>C</td><td>ç</td><td>Ç</td><td>French/Portuguese</td></tr>
+            <tr><td>E (special)</td><td>€</td><td>-</td><td>Euro symbol</td></tr>
+            <tr><td>L (special)</td><td>£</td><td>-</td><td>Pound symbol</td></tr>
+        </table>
+
+        <h4 style="margin: 20px 0 10px; color: var(--accent-green);">Alt Layer (Vi Motions)</h4>
+        <table class="ref-table">
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+                <th>Equivalent</th>
+                <th>Context</th>
+            </tr>
+            <tr><td>H</td><td>Left</td><td>←</td><td>Vi/Universal</td></tr>
+            <tr><td>J</td><td>Down</td><td>↓</td><td>Vi/Universal</td></tr>
+            <tr><td>K</td><td>Up</td><td>↑</td><td>Vi/Universal</td></tr>
+            <tr><td>L</td><td>Right</td><td>→</td><td>Vi/Universal</td></tr>
+            <tr><td>W</td><td>Word Forward</td><td>Ctrl+→</td><td>Vi/Universal</td></tr>
+            <tr><td>B</td><td>Word Back</td><td>Ctrl+←</td><td>Vi/Universal</td></tr>
+            <tr><td>0</td><td>Line Start</td><td>Home</td><td>Vi/Universal</td></tr>
+            <tr><td>4 ($)</td><td>Line End</td><td>End</td><td>Vi/Universal</td></tr>
+            <tr><td>G</td><td>Top</td><td>Ctrl+Home</td><td>Vi/Universal</td></tr>
+            <tr><td>Shift+G</td><td>Bottom</td><td>Ctrl+End</td><td>Vi/Universal</td></tr>
+            <tr><td>U</td><td>Page Up</td><td>PgUp</td><td>Vi Ctrl+U</td></tr>
+            <tr><td>D</td><td>Page Down</td><td>PgDn</td><td>Vi Ctrl+D</td></tr>
+            <tr><td>X</td><td>Delete char</td><td>Del</td><td>Vi</td></tr>
+            <tr><td>Backspace</td><td>Delete word</td><td>Ctrl+Backspace</td><td>Universal</td></tr>
+        </table>
+
+        <h4 style="margin: 20px 0 10px; color: var(--accent-orange);">Navigation Layer</h4>
+        <table class="ref-table">
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+                <th>Use Case</th>
+            </tr>
+            <tr><td>H/J/K/L</td><td>Arrows</td><td>Navigation</td></tr>
+            <tr><td>T</td><td>Ctrl+T</td><td>New tab (Browser)</td></tr>
+            <tr><td>W</td><td>Ctrl+W</td><td>Close tab (Browser)</td></tr>
+            <tr><td>[ / ]</td><td>Ctrl+Shift+Tab / Ctrl+Tab</td><td>Tab switching</td></tr>
+            <tr><td>R</td><td>Ctrl+R / F5</td><td>Reload</td></tr>
+            <tr><td>F</td><td>Ctrl+F</td><td>Find</td></tr>
+            <tr><td>N</td><td>Ctrl+A, N (tmux next)</td><td>Tmux next window</td></tr>
+            <tr><td>P</td><td>Ctrl+A, P (tmux prev)</td><td>Tmux prev window</td></tr>
+            <tr><td>C</td><td>Ctrl+A, C (tmux new)</td><td>Tmux new window</td></tr>
+            <tr><td>V</td><td>Ctrl+A, % (tmux vsplit)</td><td>Tmux vertical split</td></tr>
+            <tr><td>S</td><td>Ctrl+A, " (tmux hsplit)</td><td>Tmux horizontal split</td></tr>
+        </table>
+    </div>
+
+    <script>
+        // Layout definition
+        const layouts = {
+            base: {
+                left: [
+                    // Row 0 (top)
+                    [
+                        { main: '=', shift: '+', type: 'symbol' },
+                        { main: '1', shift: '!', type: 'number' },
+                        { main: '2', shift: '@', type: 'number' },
+                        { main: '3', shift: '#', type: 'number' },
+                        { main: '4', shift: '$', type: 'number' },
+                        { main: '5', shift: '%', type: 'number' },
+                        { main: 'Esc', type: 'modifier', class: 'modifier' }
+                    ],
+                    // Row 1
+                    [
+                        { main: 'Tab', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: "'", shift: '"', type: 'symbol' },
+                        { main: ',', shift: '<', type: 'symbol' },
+                        { main: '.', shift: '>', type: 'symbol' },
+                        { main: 'P', type: 'letter' },
+                        { main: 'Y', type: 'letter' },
+                        { main: '[', shift: '{', type: 'symbol' }
+                    ],
+                    // Row 2 (home)
+                    [
+                        { main: 'Ctrl', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: 'A', type: 'letter' },
+                        { main: 'O', type: 'letter' },
+                        { main: 'E', type: 'letter' },
+                        { main: 'U', type: 'letter' },
+                        { main: 'I', type: 'letter' },
+                        { main: ']', shift: '}', type: 'symbol' }
+                    ],
+                    // Row 3
+                    [
+                        { main: 'Shift', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: ';', shift: ':', type: 'symbol' },
+                        { main: 'Q', type: 'letter' },
+                        { main: 'J', type: 'letter' },
+                        { main: 'K', type: 'letter' },
+                        { main: 'X', type: 'letter' },
+                        { main: 'NAV', type: 'modifier', class: 'layer-switch' }
+                    ]
+                ],
+                leftThumb: [
+                    [
+                        { main: 'Bksp', type: 'modifier', class: 'thumb' },
+                        { main: 'Del', type: 'modifier', class: 'thumb' },
+                        { main: 'Home', type: 'navigation', class: 'thumb' }
+                    ],
+                    [
+                        { main: 'Space', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: 'Esc', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: 'End', type: 'navigation', class: 'thumb' }
+                    ]
+                ],
+                right: [
+                    // Row 0
+                    [
+                        { main: 'PrtSc', type: 'function', class: 'modifier' },
+                        { main: '6', shift: '^', type: 'number' },
+                        { main: '7', shift: '&', type: 'number' },
+                        { main: '8', shift: '*', type: 'number' },
+                        { main: '9', shift: '(', type: 'number' },
+                        { main: '0', shift: ')', type: 'number' },
+                        { main: '\\', shift: '|', type: 'symbol' }
+                    ],
+                    // Row 1
+                    [
+                        { main: '`', shift: '~', type: 'symbol' },
+                        { main: 'F', type: 'letter' },
+                        { main: 'G', type: 'letter' },
+                        { main: 'C', type: 'letter' },
+                        { main: 'R', type: 'letter' },
+                        { main: 'L', type: 'letter' },
+                        { main: '/', shift: '?', type: 'symbol', class: 'key-1-5u' }
+                    ],
+                    // Row 2 (home)
+                    [
+                        { main: '-', shift: '_', type: 'symbol' },
+                        { main: 'D', type: 'letter' },
+                        { main: 'H', type: 'letter' },
+                        { main: 'T', type: 'letter' },
+                        { main: 'N', type: 'letter' },
+                        { main: 'S', type: 'letter' },
+                        { main: 'Enter', type: 'modifier', class: 'modifier key-1-5u' }
+                    ],
+                    // Row 3
+                    [
+                        { main: 'SYM', type: 'modifier', class: 'layer-switch' },
+                        { main: 'B', type: 'letter' },
+                        { main: 'M', type: 'letter' },
+                        { main: 'W', type: 'letter' },
+                        { main: 'V', type: 'letter' },
+                        { main: 'Z', type: 'letter' },
+                        { main: 'Shift', type: 'modifier', class: 'modifier key-1-5u' }
+                    ]
+                ],
+                rightThumb: [
+                    [
+                        { main: 'PgUp', type: 'navigation', class: 'thumb' },
+                        { main: 'Ins', type: 'modifier', class: 'thumb' },
+                        { main: 'AltGr', type: 'modifier', class: 'thumb modifier' }
+                    ],
+                    [
+                        { main: 'PgDn', type: 'navigation', class: 'thumb' },
+                        { main: 'Alt', type: 'modifier', class: 'thumb thumb-big modifier' },
+                        { main: 'Enter', type: 'modifier', class: 'thumb thumb-big' }
+                    ]
+                ]
+            },
+            altgr: {
+                left: [
+                    [
+                        { main: '¬', type: 'symbol' },
+                        { main: '¡', type: 'symbol' },
+                        { main: '²', type: 'symbol' },
+                        { main: '³', type: 'symbol' },
+                        { main: '¤', type: 'symbol' },
+                        { main: '€', type: 'symbol' },
+                        { main: '', type: 'modifier' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '´', secondary: 'acute', type: 'symbol' },
+                        { main: '«', type: 'symbol' },
+                        { main: '»', type: 'symbol' },
+                        { main: '¶', type: 'symbol' },
+                        { main: '¥', type: 'symbol' },
+                        { main: '‹', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: 'á', shift: 'ä', type: 'letter' },
+                        { main: 'ó', shift: 'ö', type: 'letter' },
+                        { main: 'é', shift: 'ë', type: 'letter' },
+                        { main: 'ú', shift: 'ü', type: 'letter' },
+                        { main: 'í', shift: 'ï', type: 'letter' },
+                        { main: '›', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '°', type: 'symbol' },
+                        { main: '×', type: 'symbol' },
+                        { main: '÷', type: 'symbol' },
+                        { main: '·', type: 'symbol' },
+                        { main: '±', type: 'symbol' },
+                        { main: '', type: 'modifier', class: 'layer-switch' }
+                    ]
+                ],
+                leftThumb: [
+                    [
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'navigation', class: 'thumb' }
+                    ],
+                    [
+                        { main: 'NBSP', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: '', type: 'navigation', class: 'thumb' }
+                    ]
+                ],
+                right: [
+                    [
+                        { main: '', type: 'function', class: 'modifier' },
+                        { main: '⁶', type: 'number' },
+                        { main: '⁷', type: 'number' },
+                        { main: '⁸', type: 'number' },
+                        { main: '⁹', type: 'number' },
+                        { main: '⁰', type: 'number' },
+                        { main: '¦', type: 'symbol' }
+                    ],
+                    [
+                        { main: '`', type: 'symbol' },
+                        { main: '¼', type: 'symbol' },
+                        { main: '½', type: 'symbol' },
+                        { main: 'ç', shift: 'Ç', type: 'letter' },
+                        { main: '®', type: 'symbol' },
+                        { main: '£', type: 'symbol' },
+                        { main: '¿', type: 'symbol', class: 'key-1-5u' }
+                    ],
+                    [
+                        { main: '–', secondary: 'en-dash', type: 'symbol' },
+                        { main: 'ð', shift: 'Ð', type: 'letter' },
+                        { main: '←', type: 'symbol' },
+                        { main: 'þ', shift: 'Þ', type: 'letter' },
+                        { main: 'ñ', shift: 'Ñ', type: 'letter' },
+                        { main: 'ß', shift: 'ẞ', type: 'letter' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'layer-switch' },
+                        { main: '•', type: 'symbol' },
+                        { main: 'µ', type: 'symbol' },
+                        { main: '©', type: 'symbol' },
+                        { main: '™', type: 'symbol' },
+                        { main: '…', type: 'symbol' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ]
+                ],
+                rightThumb: [
+                    [
+                        { main: '', type: 'navigation', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: 'AltGr', secondary: 'HELD', type: 'modifier', class: 'thumb modifier' }
+                    ],
+                    [
+                        { main: '', type: 'navigation', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big modifier' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' }
+                    ]
+                ]
+            },
+            alt: {
+                left: [
+                    [
+                        { main: '', type: 'symbol' },
+                        { main: 'F1', type: 'function' },
+                        { main: 'F2', type: 'function' },
+                        { main: 'F3', type: 'function' },
+                        { main: 'F4', type: 'function' },
+                        { main: 'F5', type: 'function' },
+                        { main: '', type: 'modifier' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: 'PgUp', secondary: 'C-U', type: 'navigation' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'letter' },
+                        { main: '↓', secondary: 'J', type: 'navigation' },
+                        { main: '↑', secondary: 'K', type: 'navigation' },
+                        { main: 'Del', secondary: 'X', type: 'navigation' },
+                        { main: '', type: 'modifier', class: 'layer-switch' }
+                    ]
+                ],
+                leftThumb: [
+                    [
+                        { main: 'C-Bksp', secondary: 'DelWord', type: 'modifier', class: 'thumb' },
+                        { main: 'C-Del', secondary: 'DelWord', type: 'modifier', class: 'thumb' },
+                        { main: 'C-Home', secondary: 'Top', type: 'navigation', class: 'thumb' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: 'C-End', secondary: 'Bottom', type: 'navigation', class: 'thumb' }
+                    ]
+                ],
+                right: [
+                    [
+                        { main: '', type: 'function', class: 'modifier' },
+                        { main: 'F6', type: 'function' },
+                        { main: 'F7', type: 'function' },
+                        { main: 'F8', type: 'function' },
+                        { main: 'F9', type: 'function' },
+                        { main: 'F10', type: 'function' },
+                        { main: 'F11', type: 'function' }
+                    ],
+                    [
+                        { main: 'F12', type: 'function' },
+                        { main: '', type: 'letter' },
+                        { main: 'gg', secondary: 'C-Home', type: 'navigation' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: 'End', secondary: '$', type: 'navigation' },
+                        { main: '', type: 'symbol', class: 'key-1-5u' }
+                    ],
+                    [
+                        { main: '', type: 'symbol' },
+                        { main: 'PgDn', secondary: 'C-D', type: 'navigation' },
+                        { main: '←', secondary: 'H', type: 'navigation' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: 'Home', secondary: '0', type: 'navigation' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'layer-switch' },
+                        { main: 'C-←', secondary: 'B', type: 'navigation' },
+                        { main: '', type: 'letter' },
+                        { main: 'C-→', secondary: 'W', type: 'navigation' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ]
+                ],
+                rightThumb: [
+                    [
+                        { main: '', type: 'navigation', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb modifier' }
+                    ],
+                    [
+                        { main: '', type: 'navigation', class: 'thumb' },
+                        { main: 'Alt', secondary: 'HELD', type: 'modifier', class: 'thumb thumb-big modifier' },
+                        { main: '→', secondary: 'L', type: 'navigation', class: 'thumb thumb-big' }
+                    ]
+                ]
+            },
+            nav: {
+                left: [
+                    [
+                        { main: '', type: 'symbol' },
+                        { main: '!', type: 'symbol' },
+                        { main: '@', type: 'symbol' },
+                        { main: '#', type: 'symbol' },
+                        { main: '$', type: 'symbol' },
+                        { main: '%', type: 'symbol' },
+                        { main: '', type: 'modifier' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: 'C-S-Tab', secondary: 'TabL', type: 'navigation' },
+                        { main: 'C-Tab', secondary: 'TabR', type: 'navigation' },
+                        { main: 'C-T', secondary: 'NewTab', type: 'navigation' },
+                        { main: 'C-W', secondary: 'Close', type: 'navigation' },
+                        { main: 'C-R', secondary: 'Reload', type: 'navigation' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: 'C-A', secondary: 'SelAll', type: 'navigation' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: 'C-Z', secondary: 'Undo', type: 'navigation' },
+                        { main: 'C-Y', secondary: 'Redo', type: 'navigation' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: 'C-X', secondary: 'Cut', type: 'navigation' },
+                        { main: 'C-C', secondary: 'Copy', type: 'navigation' },
+                        { main: 'C-V', secondary: 'Paste', type: 'navigation' },
+                        { main: 'C-F', secondary: 'Find', type: 'navigation' },
+                        { main: 'C-H', secondary: 'Repl', type: 'navigation' },
+                        { main: 'NAV', secondary: 'HELD', type: 'modifier', class: 'layer-switch' }
+                    ]
+                ],
+                leftThumb: [
+                    [
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'navigation', class: 'thumb' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: '', type: 'navigation', class: 'thumb' }
+                    ]
+                ],
+                right: [
+                    [
+                        { main: '', type: 'function', class: 'modifier' },
+                        { main: '^', type: 'symbol' },
+                        { main: '&', type: 'symbol' },
+                        { main: '*', type: 'symbol' },
+                        { main: '(', type: 'symbol' },
+                        { main: ')', type: 'symbol' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: 'C-a,c', secondary: 'TmxNew', type: 'navigation' },
+                        { main: '', type: 'letter' },
+                        { main: 'C-L', secondary: 'AddrBar', type: 'navigation' },
+                        { main: '', type: 'symbol', class: 'key-1-5u' }
+                    ],
+                    [
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'letter' },
+                        { main: '←', secondary: 'TmxH', type: 'navigation' },
+                        { main: '↓', secondary: 'TmxJ', type: 'navigation' },
+                        { main: '↑', secondary: 'TmxK', type: 'navigation' },
+                        { main: '→', secondary: 'TmxL', type: 'navigation' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'layer-switch' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: 'C-a,%', secondary: 'TmxVS', type: 'navigation' },
+                        { main: 'C-a,"', secondary: 'TmxHS', type: 'navigation' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ]
+                ],
+                rightThumb: [
+                    [
+                        { main: 'C-a,p', secondary: 'TmxPrv', type: 'navigation', class: 'thumb' },
+                        { main: 'C-a,n', secondary: 'TmxNxt', type: 'navigation', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb modifier' }
+                    ],
+                    [
+                        { main: '', type: 'navigation', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big modifier' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' }
+                    ]
+                ]
+            },
+            symbol: {
+                left: [
+                    [
+                        { main: '~', type: 'symbol' },
+                        { main: '!', type: 'symbol' },
+                        { main: '@', type: 'symbol' },
+                        { main: '#', type: 'symbol' },
+                        { main: '$', type: 'symbol' },
+                        { main: '%', type: 'symbol' },
+                        { main: '', type: 'modifier' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '!', type: 'symbol' },
+                        { main: '@', type: 'symbol' },
+                        { main: '{', type: 'symbol' },
+                        { main: '}', type: 'symbol' },
+                        { main: '|', type: 'symbol' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '#', type: 'symbol' },
+                        { main: '$', type: 'symbol' },
+                        { main: '(', type: 'symbol' },
+                        { main: ')', type: 'symbol' },
+                        { main: '`', type: 'symbol' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '%', type: 'symbol' },
+                        { main: '^', type: 'symbol' },
+                        { main: '[', type: 'symbol' },
+                        { main: ']', type: 'symbol' },
+                        { main: '~', type: 'symbol' },
+                        { main: '', type: 'modifier', class: 'layer-switch' }
+                    ]
+                ],
+                leftThumb: [
+                    [
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'navigation', class: 'thumb' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: '', type: 'navigation', class: 'thumb' }
+                    ]
+                ],
+                right: [
+                    [
+                        { main: '', type: 'function', class: 'modifier' },
+                        { main: '^', type: 'symbol' },
+                        { main: '&', type: 'symbol' },
+                        { main: '*', type: 'symbol' },
+                        { main: '(', type: 'symbol' },
+                        { main: ')', type: 'symbol' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'symbol' },
+                        { main: '&', type: 'symbol' },
+                        { main: '*', type: 'symbol' },
+                        { main: '<', type: 'symbol' },
+                        { main: '>', type: 'symbol' },
+                        { main: "'", type: 'symbol' },
+                        { main: '', type: 'symbol', class: 'key-1-5u' }
+                    ],
+                    [
+                        { main: '', type: 'symbol' },
+                        { main: '-', type: 'symbol' },
+                        { main: '=', type: 'symbol' },
+                        { main: '+', type: 'symbol' },
+                        { main: '_', type: 'symbol' },
+                        { main: '"', type: 'symbol' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ],
+                    [
+                        { main: 'SYM', secondary: 'HELD', type: 'modifier', class: 'layer-switch' },
+                        { main: '/', type: 'symbol' },
+                        { main: '\\', type: 'symbol' },
+                        { main: '?', type: 'symbol' },
+                        { main: ':', type: 'symbol' },
+                        { main: ';', type: 'symbol' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ]
+                ],
+                rightThumb: [
+                    [
+                        { main: '', type: 'navigation', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb modifier' }
+                    ],
+                    [
+                        { main: '', type: 'navigation', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big modifier' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' }
+                    ]
+                ]
+            },
+            fn: {
+                left: [
+                    [
+                        { main: '', type: 'symbol' },
+                        { main: 'F1', type: 'function' },
+                        { main: 'F2', type: 'function' },
+                        { main: 'F3', type: 'function' },
+                        { main: 'F4', type: 'function' },
+                        { main: 'F5', type: 'function' },
+                        { main: '', type: 'modifier' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '', type: 'symbol' },
+                        { main: 'Mute', type: 'function' },
+                        { main: 'Vol-', type: 'function' },
+                        { main: 'Vol+', type: 'function' },
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '', type: 'letter' },
+                        { main: 'Prev', type: 'function' },
+                        { main: 'Play', type: 'function' },
+                        { main: 'Next', type: 'function' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'symbol' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' },
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'letter' },
+                        { main: 'Bri-', type: 'function' },
+                        { main: 'Bri+', type: 'function' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'modifier', class: 'layer-switch' }
+                    ]
+                ],
+                leftThumb: [
+                    [
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: '', type: 'navigation', class: 'thumb' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
+                        { main: '', type: 'navigation', class: 'thumb' }
+                    ]
+                ],
+                right: [
+                    [
+                        { main: '', type: 'function', class: 'modifier' },
+                        { main: 'F6', type: 'function' },
+                        { main: 'F7', type: 'function' },
+                        { main: 'F8', type: 'function' },
+                        { main: 'F9', type: 'function' },
+                        { main: 'F10', type: 'function' },
+                        { main: 'F11', type: 'function' }
+                    ],
+                    [
+                        { main: 'F12', type: 'function' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: 'RGB-', type: 'function' },
+                        { main: 'RGB+', type: 'function' },
+                        { main: '', type: 'symbol', class: 'key-1-5u' }
+                    ],
+                    [
+                        { main: '', type: 'symbol' },
+                        { main: '', type: 'letter' },
+                        { main: 'Hue-', type: 'function' },
+                        { main: 'Hue+', type: 'function' },
+                        { main: 'Sat-', type: 'function' },
+                        { main: 'Sat+', type: 'function' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ],
+                    [
+                        { main: '', type: 'modifier', class: 'layer-switch' },
+                        { main: 'BOOT', secondary: 'Flash', type: 'function' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'letter' },
+                        { main: '', type: 'modifier', class: 'modifier key-1-5u' }
+                    ]
+                ],
+                rightThumb: [
+                    [
+                        { main: '', type: 'navigation', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb' },
+                        { main: 'FN', secondary: 'HELD', type: 'modifier', class: 'thumb modifier' }
+                    ],
+                    [
+                        { main: '', type: 'navigation', class: 'thumb' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big modifier' },
+                        { main: '', type: 'modifier', class: 'thumb thumb-big' }
+                    ]
+                ]
+            }
+        };
+
+        let currentLayer = 'base';
+        let selectedKey = null;
+        let customLayout = JSON.parse(JSON.stringify(layouts));
+
+        // Layer names for display
+        const layerNames = {
+            base: 'Base (Dvorak)',
+            altgr: 'AltGr (International)',
+            alt: 'Alt (Vi Motions)',
+            nav: 'Navigation',
+            symbol: 'Symbol',
+            fn: 'Fn/Media'
+        };
+
+        function createKey(keyData, position) {
+            const key = document.createElement('div');
+            const classes = ['key'];
+
+            if (keyData.class) {
+                classes.push(...keyData.class.split(' '));
+            }
+
+            if (keyData.type) {
+                key.dataset.type = keyData.type;
+            }
+
+            key.className = classes.join(' ');
+            key.dataset.position = position;
+
+            let html = '';
+
+            if (keyData.shift) {
+                html += `<span class="corner-tl">${keyData.shift}</span>`;
+            }
+
+            html += `<span class="main">${keyData.main || ''}</span>`;
+
+            if (keyData.secondary) {
+                html += `<span class="secondary">${keyData.secondary}</span>`;
+            }
+
+            key.innerHTML = html;
+
+            key.addEventListener('click', () => selectKey(key, keyData, position));
+            key.addEventListener('mousedown', () => key.classList.add('pressed'));
+            key.addEventListener('mouseup', () => key.classList.remove('pressed'));
+            key.addEventListener('mouseleave', () => key.classList.remove('pressed'));
+
+            return key;
+        }
+
+        function renderKeyboard() {
+            const layout = customLayout[currentLayer];
+
+            // Clear existing keys
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`left-row-${i}`).innerHTML = '';
+                document.getElementById(`right-row-${i}`).innerHTML = '';
+            }
+            document.getElementById('left-thumb').innerHTML = '';
+            document.getElementById('right-thumb').innerHTML = '';
+
+            // Render left half
+            layout.left.forEach((row, rowIndex) => {
+                const rowEl = document.getElementById(`left-row-${rowIndex}`);
+                row.forEach((keyData, keyIndex) => {
+                    rowEl.appendChild(createKey(keyData, `left-${rowIndex}-${keyIndex}`));
+                });
+            });
+
+            // Render left thumb cluster
+            const leftThumb = document.getElementById('left-thumb');
+            layout.leftThumb.forEach((row, rowIndex) => {
+                const thumbRow = document.createElement('div');
+                thumbRow.className = 'thumb-row';
+                row.forEach((keyData, keyIndex) => {
+                    thumbRow.appendChild(createKey(keyData, `left-thumb-${rowIndex}-${keyIndex}`));
+                });
+                leftThumb.appendChild(thumbRow);
+            });
+
+            // Render right half
+            layout.right.forEach((row, rowIndex) => {
+                const rowEl = document.getElementById(`right-row-${rowIndex}`);
+                row.forEach((keyData, keyIndex) => {
+                    rowEl.appendChild(createKey(keyData, `right-${rowIndex}-${keyIndex}`));
+                });
+            });
+
+            // Render right thumb cluster
+            const rightThumb = document.getElementById('right-thumb');
+            layout.rightThumb.forEach((row, rowIndex) => {
+                const thumbRow = document.createElement('div');
+                thumbRow.className = 'thumb-row';
+                row.forEach((keyData, keyIndex) => {
+                    thumbRow.appendChild(createKey(keyData, `right-thumb-${rowIndex}-${keyIndex}`));
+                });
+                rightThumb.appendChild(thumbRow);
+            });
+        }
+
+        function selectKey(keyElement, keyData, position) {
+            // Remove previous selection
+            document.querySelectorAll('.key.selected').forEach(k => k.classList.remove('selected'));
+
+            keyElement.classList.add('selected');
+            keyElement.style.outline = '2px solid var(--key-active)';
+
+            selectedKey = { element: keyElement, data: keyData, position };
+
+            const info = document.getElementById('selectedKeyInfo');
+            info.innerHTML = `
+                <strong>Selected Key:</strong> ${keyData.main || '(empty)'}
+                <span style="color: var(--key-secondary)">at position ${position}</span><br>
+                <span style="color: var(--key-secondary)">Shift: ${keyData.shift || '-'} | Type: ${keyData.type || '-'}</span>
+            `;
+
+            document.getElementById('keyEditorForm').style.display = 'grid';
+            document.getElementById('editBase').value = keyData.main || '';
+            document.getElementById('editShift').value = keyData.shift || '';
+            document.getElementById('editAltGr').value = customLayout.altgr ? getKeyFromPosition(position, 'altgr')?.main || '' : '';
+            document.getElementById('editAlt').value = customLayout.alt ? getKeyFromPosition(position, 'alt')?.main || '' : '';
+        }
+
+        function getKeyFromPosition(position, layer) {
+            const parts = position.split('-');
+            const layout = customLayout[layer];
+
+            if (parts[0] === 'left') {
+                if (parts[1] === 'thumb') {
+                    return layout.leftThumb[parseInt(parts[2])][parseInt(parts[3])];
+                }
+                return layout.left[parseInt(parts[1])][parseInt(parts[2])];
+            } else {
+                if (parts[1] === 'thumb') {
+                    return layout.rightThumb[parseInt(parts[2])][parseInt(parts[3])];
+                }
+                return layout.right[parseInt(parts[1])][parseInt(parts[2])];
+            }
+        }
+
+        function setKeyAtPosition(position, layer, data) {
+            const parts = position.split('-');
+            const layout = customLayout[layer];
+
+            if (parts[0] === 'left') {
+                if (parts[1] === 'thumb') {
+                    Object.assign(layout.leftThumb[parseInt(parts[2])][parseInt(parts[3])], data);
+                } else {
+                    Object.assign(layout.left[parseInt(parts[1])][parseInt(parts[2])], data);
+                }
+            } else {
+                if (parts[1] === 'thumb') {
+                    Object.assign(layout.rightThumb[parseInt(parts[2])][parseInt(parts[3])], data);
+                } else {
+                    Object.assign(layout.right[parseInt(parts[1])][parseInt(parts[2])], data);
+                }
+            }
+        }
+
+        function saveKeyEdit() {
+            if (!selectedKey) return;
+
+            const position = selectedKey.position;
+
+            setKeyAtPosition(position, currentLayer, {
+                main: document.getElementById('editBase').value,
+                shift: document.getElementById('editShift').value
+            });
+
+            if (document.getElementById('editAltGr').value) {
+                setKeyAtPosition(position, 'altgr', {
+                    main: document.getElementById('editAltGr').value
+                });
+            }
+
+            if (document.getElementById('editAlt').value) {
+                setKeyAtPosition(position, 'alt', {
+                    main: document.getElementById('editAlt').value
+                });
+            }
+
+            renderKeyboard();
+
+            // Re-select the key
+            setTimeout(() => {
+                const newKey = document.querySelector(`[data-position="${position}"]`);
+                if (newKey) {
+                    const keyData = getKeyFromPosition(position, currentLayer);
+                    selectKey(newKey, keyData, position);
+                }
+            }, 10);
+        }
+
+        function exportLayout() {
+            const json = JSON.stringify(customLayout, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'moonlander-dvorak-layout.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importLayout() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        customLayout = JSON.parse(event.target.result);
+                        renderKeyboard();
+                        alert('Layout imported successfully!');
+                    } catch (err) {
+                        alert('Error importing layout: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function resetLayout() {
+            if (confirm('Reset to default layout? All customizations will be lost.')) {
+                customLayout = JSON.parse(JSON.stringify(layouts));
+                renderKeyboard();
+            }
+        }
+
+        // Layer switching
+        document.querySelectorAll('.layer-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentLayer = btn.dataset.layer;
+                document.querySelector('.current-layer').textContent = layerNames[currentLayer];
+                renderKeyboard();
+            });
+        });
+
+        // Key testing
+        const testInput = document.getElementById('testInput');
+        const keyDisplay = document.getElementById('keyDisplay');
+        let pressedKeys = new Set();
+
+        testInput.addEventListener('keydown', (e) => {
+            // Prevent default for modifier keys to keep focus
+            if (['Alt', 'AltGraph', 'Control', 'Shift'].includes(e.key)) {
+                e.preventDefault();
+            }
+
+            pressedKeys.add(e.key);
+            updateKeyDisplay();
+
+            // Highlight corresponding key on keyboard
+            highlightKey(e.key, e.altKey, e.ctrlKey, e.shiftKey, e.getModifierState('AltGraph'));
+        });
+
+        testInput.addEventListener('keyup', (e) => {
+            pressedKeys.delete(e.key);
+            updateKeyDisplay();
+        });
+
+        testInput.addEventListener('blur', () => {
+            pressedKeys.clear();
+            updateKeyDisplay();
+        });
+
+        function updateKeyDisplay() {
+            keyDisplay.innerHTML = Array.from(pressedKeys).map(key =>
+                `<span class="pressed-key">${key}</span>`
+            ).join('');
+        }
+
+        function highlightKey(key, alt, ctrl, shift, altGr) {
+            // Switch layer based on modifiers
+            if (altGr || (alt && ctrl)) {
+                setLayer('altgr');
+            } else if (alt) {
+                setLayer('alt');
+            } else {
+                setLayer('base');
+            }
+
+            // Find and highlight the key
+            document.querySelectorAll('.key').forEach(k => {
+                const mainText = k.querySelector('.main')?.textContent;
+                if (mainText && mainText.toLowerCase() === key.toLowerCase()) {
+                    k.classList.add('pressed');
+                    setTimeout(() => k.classList.remove('pressed'), 150);
+                }
+            });
+        }
+
+        function setLayer(layer) {
+            if (currentLayer !== layer) {
+                document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector(`[data-layer="${layer}"]`).classList.add('active');
+                currentLayer = layer;
+                document.querySelector('.current-layer').textContent = layerNames[currentLayer];
+                renderKeyboard();
+            }
+        }
+
+        // Initialize
+        renderKeyboard();
+    </script>
+</body>
+</html>
