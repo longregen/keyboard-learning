@@ -204,30 +204,36 @@
         .key-2u { width: 128px; }
 
         .thumb-cluster {
-            display: flex;
-            flex-direction: column;
+            display: grid;
             gap: 4px;
-            margin-top: 20px;
-        }
-
-        .thumb-row {
-            display: flex;
-            gap: 4px;
+            margin-top: 10px;
         }
 
         .left .thumb-cluster {
             margin-left: auto;
-            align-items: flex-end;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: 54px 70px;
+            grid-template-areas:
+                ". key2 key3"
+                "key1 key1 key4";
         }
 
         .right .thumb-cluster {
             margin-right: auto;
-            align-items: flex-start;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: 54px 70px;
+            grid-template-areas:
+                "key1 key2 ."
+                "key3 key4 key4";
         }
 
+        .thumb-key-1 { grid-area: key1; }
+        .thumb-key-2 { grid-area: key2; }
+        .thumb-key-3 { grid-area: key3; }
+        .thumb-key-4 { grid-area: key4; }
+
         .thumb-big {
-            width: 60px;
-            height: 80px;
+            height: 70px;
         }
 
         /* Test area */
@@ -688,7 +694,7 @@
             <div class="legend-section">
                 <h4>Vim Extras</h4>
                 <ul>
-                    <li><span class="key-ref">Esc</span> Left thumb (easy access)</li>
+                    <li><span class="key-ref">Esc</span> Left thumb cluster (easy access)</li>
                     <li><span class="key-ref">:</span> Command mode (Shift+;)</li>
                     <li><span class="key-ref">Nav+/</span> Search</li>
                     <li><span class="key-ref">Nav+U</span> Undo</li>
@@ -798,7 +804,7 @@
                         { main: '3', shift: '#', type: 'number' },
                         { main: '4', shift: '$', type: 'number' },
                         { main: '5', shift: '%', type: 'number' },
-                        { main: 'Esc', type: 'modifier', class: 'modifier' }
+                        { main: 'FN', type: 'modifier', class: 'layer-switch' }
                     ],
                     // Row 1
                     [
@@ -832,16 +838,10 @@
                     ]
                 ],
                 leftThumb: [
-                    [
-                        { main: 'Bksp', type: 'modifier', class: 'thumb' },
-                        { main: 'Del', type: 'modifier', class: 'thumb' },
-                        { main: 'Home', type: 'navigation', class: 'thumb' }
-                    ],
-                    [
-                        { main: 'Space', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: 'Esc', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: 'End', type: 'navigation', class: 'thumb' }
-                    ]
+                    { main: 'Space', type: 'modifier', class: 'thumb thumb-big thumb-key-1' },
+                    { main: 'Bksp', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: 'Esc', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: 'Del', type: 'modifier', class: 'thumb thumb-key-4' }
                 ],
                 right: [
                     // Row 0
@@ -886,16 +886,10 @@
                     ]
                 ],
                 rightThumb: [
-                    [
-                        { main: 'PgUp', type: 'navigation', class: 'thumb' },
-                        { main: 'Ins', type: 'modifier', class: 'thumb' },
-                        { main: 'AltGr', type: 'modifier', class: 'thumb modifier' }
-                    ],
-                    [
-                        { main: 'PgDn', type: 'navigation', class: 'thumb' },
-                        { main: 'Alt', type: 'modifier', class: 'thumb thumb-big modifier' },
-                        { main: 'Enter', type: 'modifier', class: 'thumb thumb-big' }
-                    ]
+                    { main: 'AltGr', type: 'modifier', class: 'thumb modifier thumb-key-1' },
+                    { main: 'Ctrl', type: 'modifier', class: 'thumb modifier thumb-key-2' },
+                    { main: 'Tab', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: 'Enter', type: 'modifier', class: 'thumb thumb-big thumb-key-4' }
                 ]
             },
             altgr: {
@@ -938,16 +932,10 @@
                     ]
                 ],
                 leftThumb: [
-                    [
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'navigation', class: 'thumb' }
-                    ],
-                    [
-                        { main: 'NBSP', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: '', type: 'navigation', class: 'thumb' }
-                    ]
+                    { main: 'NBSP', type: 'modifier', class: 'thumb thumb-big thumb-key-1' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-4' }
                 ],
                 right: [
                     [
@@ -988,16 +976,10 @@
                     ]
                 ],
                 rightThumb: [
-                    [
-                        { main: '', type: 'navigation', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: 'AltGr', secondary: 'HELD', type: 'modifier', class: 'thumb modifier' }
-                    ],
-                    [
-                        { main: '', type: 'navigation', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big modifier' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' }
-                    ]
+                    { main: 'AltGr', secondary: 'HELD', type: 'modifier', class: 'thumb modifier thumb-key-1' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-big thumb-key-4' }
                 ]
             },
             alt: {
@@ -1040,16 +1022,10 @@
                     ]
                 ],
                 leftThumb: [
-                    [
-                        { main: 'C-Bksp', secondary: 'DelWord', type: 'modifier', class: 'thumb' },
-                        { main: 'C-Del', secondary: 'DelWord', type: 'modifier', class: 'thumb' },
-                        { main: 'C-Home', secondary: 'Top', type: 'navigation', class: 'thumb' }
-                    ],
-                    [
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: 'C-End', secondary: 'Bottom', type: 'navigation', class: 'thumb' }
-                    ]
+                    { main: '', type: 'modifier', class: 'thumb thumb-big thumb-key-1' },
+                    { main: 'C-Bksp', secondary: 'DelWord', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: 'C-Home', secondary: 'Top', type: 'navigation', class: 'thumb thumb-key-3' },
+                    { main: 'C-End', secondary: 'Bottom', type: 'navigation', class: 'thumb thumb-key-4' }
                 ],
                 right: [
                     [
@@ -1090,16 +1066,10 @@
                     ]
                 ],
                 rightThumb: [
-                    [
-                        { main: '', type: 'navigation', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb modifier' }
-                    ],
-                    [
-                        { main: '', type: 'navigation', class: 'thumb' },
-                        { main: 'Alt', secondary: 'HELD', type: 'modifier', class: 'thumb thumb-big modifier' },
-                        { main: '→', secondary: 'L', type: 'navigation', class: 'thumb thumb-big' }
-                    ]
+                    { main: '', type: 'modifier', class: 'thumb modifier thumb-key-1' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: '→', secondary: 'L', type: 'navigation', class: 'thumb thumb-big thumb-key-4' }
                 ]
             },
             nav: {
@@ -1142,16 +1112,10 @@
                     ]
                 ],
                 leftThumb: [
-                    [
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'navigation', class: 'thumb' }
-                    ],
-                    [
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: '', type: 'navigation', class: 'thumb' }
-                    ]
+                    { main: '', type: 'modifier', class: 'thumb thumb-big thumb-key-1' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-4' }
                 ],
                 right: [
                     [
@@ -1192,16 +1156,10 @@
                     ]
                 ],
                 rightThumb: [
-                    [
-                        { main: 'C-a,p', secondary: 'TmxPrv', type: 'navigation', class: 'thumb' },
-                        { main: 'C-a,n', secondary: 'TmxNxt', type: 'navigation', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb modifier' }
-                    ],
-                    [
-                        { main: '', type: 'navigation', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big modifier' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' }
-                    ]
+                    { main: 'C-a,p', secondary: 'TmxPrv', type: 'navigation', class: 'thumb thumb-key-1' },
+                    { main: 'C-a,n', secondary: 'TmxNxt', type: 'navigation', class: 'thumb thumb-key-2' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-big thumb-key-4' }
                 ]
             },
             symbol: {
@@ -1244,16 +1202,10 @@
                     ]
                 ],
                 leftThumb: [
-                    [
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'navigation', class: 'thumb' }
-                    ],
-                    [
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: '', type: 'navigation', class: 'thumb' }
-                    ]
+                    { main: '', type: 'modifier', class: 'thumb thumb-big thumb-key-1' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-4' }
                 ],
                 right: [
                     [
@@ -1294,16 +1246,10 @@
                     ]
                 ],
                 rightThumb: [
-                    [
-                        { main: '', type: 'navigation', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb modifier' }
-                    ],
-                    [
-                        { main: '', type: 'navigation', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big modifier' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' }
-                    ]
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-1' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-big thumb-key-4' }
                 ]
             },
             fn: {
@@ -1346,16 +1292,10 @@
                     ]
                 ],
                 leftThumb: [
-                    [
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: '', type: 'navigation', class: 'thumb' }
-                    ],
-                    [
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' },
-                        { main: '', type: 'navigation', class: 'thumb' }
-                    ]
+                    { main: '', type: 'modifier', class: 'thumb thumb-big thumb-key-1' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-4' }
                 ],
                 right: [
                     [
@@ -1396,16 +1336,10 @@
                     ]
                 ],
                 rightThumb: [
-                    [
-                        { main: '', type: 'navigation', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb' },
-                        { main: 'FN', secondary: 'HELD', type: 'modifier', class: 'thumb modifier' }
-                    ],
-                    [
-                        { main: '', type: 'navigation', class: 'thumb' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big modifier' },
-                        { main: '', type: 'modifier', class: 'thumb thumb-big' }
-                    ]
+                    { main: 'FN', secondary: 'HELD', type: 'modifier', class: 'thumb modifier thumb-key-1' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-2' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-key-3' },
+                    { main: '', type: 'modifier', class: 'thumb thumb-big thumb-key-4' }
                 ]
             }
         };
@@ -1482,13 +1416,8 @@
 
             // Render left thumb cluster
             const leftThumb = document.getElementById('left-thumb');
-            layout.leftThumb.forEach((row, rowIndex) => {
-                const thumbRow = document.createElement('div');
-                thumbRow.className = 'thumb-row';
-                row.forEach((keyData, keyIndex) => {
-                    thumbRow.appendChild(createKey(keyData, `left-thumb-${rowIndex}-${keyIndex}`));
-                });
-                leftThumb.appendChild(thumbRow);
+            layout.leftThumb.forEach((keyData, keyIndex) => {
+                leftThumb.appendChild(createKey(keyData, `left-thumb-${keyIndex}`));
             });
 
             // Render right half
@@ -1501,13 +1430,8 @@
 
             // Render right thumb cluster
             const rightThumb = document.getElementById('right-thumb');
-            layout.rightThumb.forEach((row, rowIndex) => {
-                const thumbRow = document.createElement('div');
-                thumbRow.className = 'thumb-row';
-                row.forEach((keyData, keyIndex) => {
-                    thumbRow.appendChild(createKey(keyData, `right-thumb-${rowIndex}-${keyIndex}`));
-                });
-                rightThumb.appendChild(thumbRow);
+            layout.rightThumb.forEach((keyData, keyIndex) => {
+                rightThumb.appendChild(createKey(keyData, `right-thumb-${keyIndex}`));
             });
         }
 
@@ -1540,12 +1464,12 @@
 
             if (parts[0] === 'left') {
                 if (parts[1] === 'thumb') {
-                    return layout.leftThumb[parseInt(parts[2])][parseInt(parts[3])];
+                    return layout.leftThumb[parseInt(parts[2])];
                 }
                 return layout.left[parseInt(parts[1])][parseInt(parts[2])];
             } else {
                 if (parts[1] === 'thumb') {
-                    return layout.rightThumb[parseInt(parts[2])][parseInt(parts[3])];
+                    return layout.rightThumb[parseInt(parts[2])];
                 }
                 return layout.right[parseInt(parts[1])][parseInt(parts[2])];
             }
@@ -1557,13 +1481,13 @@
 
             if (parts[0] === 'left') {
                 if (parts[1] === 'thumb') {
-                    Object.assign(layout.leftThumb[parseInt(parts[2])][parseInt(parts[3])], data);
+                    Object.assign(layout.leftThumb[parseInt(parts[2])], data);
                 } else {
                     Object.assign(layout.left[parseInt(parts[1])][parseInt(parts[2])], data);
                 }
             } else {
                 if (parts[1] === 'thumb') {
-                    Object.assign(layout.rightThumb[parseInt(parts[2])][parseInt(parts[3])], data);
+                    Object.assign(layout.rightThumb[parseInt(parts[2])], data);
                 } else {
                     Object.assign(layout.right[parseInt(parts[1])][parseInt(parts[2])], data);
                 }
