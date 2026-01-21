@@ -598,6 +598,7 @@
         <h3>Key Editor</h3>
         <div class="editor-controls">
             <button class="editor-btn" onclick="exportLayout()">Export JSON</button>
+            <button class="editor-btn" onclick="exportQMK()">Export QMK</button>
             <button class="editor-btn" onclick="importLayout()">Import JSON</button>
             <button class="editor-btn" onclick="resetLayout()">Reset to Default</button>
             <button class="editor-btn primary" onclick="window.print()">Print Layout</button>
@@ -1535,6 +1536,224 @@
             const a = document.createElement('a');
             a.href = url;
             a.download = 'moonlander-dvorak-layout.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // QMK Keycode mapping
+        const qmkKeycodes = {
+            // Letters
+            'A': 'KC_A', 'B': 'KC_B', 'C': 'KC_C', 'D': 'KC_D', 'E': 'KC_E',
+            'F': 'KC_F', 'G': 'KC_G', 'H': 'KC_H', 'I': 'KC_I', 'J': 'KC_J',
+            'K': 'KC_K', 'L': 'KC_L', 'M': 'KC_M', 'N': 'KC_N', 'O': 'KC_O',
+            'P': 'KC_P', 'Q': 'KC_Q', 'R': 'KC_R', 'S': 'KC_S', 'T': 'KC_T',
+            'U': 'KC_U', 'V': 'KC_V', 'W': 'KC_W', 'X': 'KC_X', 'Y': 'KC_Y',
+            'Z': 'KC_Z',
+            // Numbers
+            '0': 'KC_0', '1': 'KC_1', '2': 'KC_2', '3': 'KC_3', '4': 'KC_4',
+            '5': 'KC_5', '6': 'KC_6', '7': 'KC_7', '8': 'KC_8', '9': 'KC_9',
+            // Symbols
+            '=': 'KC_EQUAL', '-': 'KC_MINUS', '[': 'KC_LBRC', ']': 'KC_RBRC',
+            '\\': 'KC_BSLS', ';': 'KC_SCLN', "'": 'KC_QUOT', '`': 'KC_GRV',
+            ',': 'KC_COMM', '.': 'KC_DOT', '/': 'KC_SLSH',
+            // Modifiers
+            'Ctrl': 'KC_LCTL', 'Shift': 'KC_LSFT', 'Alt': 'KC_LALT',
+            'AltGr': 'KC_RALT', 'Tab': 'KC_TAB', 'Enter': 'KC_ENT',
+            'Esc': 'KC_ESC', 'Space': 'KC_SPC', 'Bksp': 'KC_BSPC',
+            'Del': 'KC_DEL', 'Ins': 'KC_INS',
+            // Navigation
+            'Home': 'KC_HOME', 'End': 'KC_END', 'PgUp': 'KC_PGUP', 'PgDn': 'KC_PGDN',
+            '←': 'KC_LEFT', '→': 'KC_RGHT', '↑': 'KC_UP', '↓': 'KC_DOWN',
+            // Function keys
+            'F1': 'KC_F1', 'F2': 'KC_F2', 'F3': 'KC_F3', 'F4': 'KC_F4',
+            'F5': 'KC_F5', 'F6': 'KC_F6', 'F7': 'KC_F7', 'F8': 'KC_F8',
+            'F9': 'KC_F9', 'F10': 'KC_F10', 'F11': 'KC_F11', 'F12': 'KC_F12',
+            // Media
+            'Mute': 'KC_MUTE', 'Vol+': 'KC_VOLU', 'Vol-': 'KC_VOLD',
+            'Play': 'KC_MPLY', 'Next': 'KC_MNXT', 'Prev': 'KC_MPRV',
+            // Special
+            'PrtSc': 'KC_PSCR', 'BOOT': 'QK_BOOT',
+            // Layer keys
+            'NAV': 'MO(1)', 'SYM': 'MO(2)', 'FN': 'MO(3)',
+            // RGB
+            'RGB+': 'RGB_VAI', 'RGB-': 'RGB_VAD', 'Hue+': 'RGB_HUI', 'Hue-': 'RGB_HUD',
+            'Sat+': 'RGB_SAI', 'Sat-': 'RGB_SAD',
+            'Bri+': 'KC_BRIU', 'Bri-': 'KC_BRID',
+            // Empty
+            '': 'KC_TRNS'
+        };
+
+        function keyToQMK(keyData) {
+            if (!keyData || !keyData.main) return 'KC_TRNS';
+            const main = keyData.main;
+
+            // Check direct mapping
+            if (qmkKeycodes[main]) return qmkKeycodes[main];
+
+            // Handle Ctrl+key combos
+            if (main.startsWith('C-')) {
+                const key = main.substring(2);
+                if (key === 'Bksp') return 'LCTL(KC_BSPC)';
+                if (key === 'Del') return 'LCTL(KC_DEL)';
+                if (key === 'Home') return 'LCTL(KC_HOME)';
+                if (key === 'End') return 'LCTL(KC_END)';
+                if (key === '←') return 'LCTL(KC_LEFT)';
+                if (key === '→') return 'LCTL(KC_RGHT)';
+                const qmk = qmkKeycodes[key.toUpperCase()];
+                if (qmk) return `LCTL(${qmk})`;
+            }
+
+            // Handle Ctrl+Shift+Tab etc
+            if (main === 'C-S-Tab') return 'LCTL(LSFT(KC_TAB))';
+            if (main === 'C-Tab') return 'LCTL(KC_TAB)';
+
+            // Handle tmux sequences (output as macro placeholder)
+            if (main.startsWith('C-a,')) {
+                return `KC_NO /* TODO: Macro for ${main} */`;
+            }
+
+            // Handle special navigation keys
+            if (main === 'gg') return 'LCTL(KC_HOME)';
+
+            // Unicode/international characters need special handling
+            if (main.match(/[áéíóúüñçäöß¿¡€£]/i)) {
+                return `KC_NO /* Unicode: ${main} */`;
+            }
+
+            // Default: transparent
+            return 'KC_NO';
+        }
+
+        function generateQMKLayer(layerName, layerNum) {
+            const layout = customLayout[layerName];
+            if (!layout) return '';
+
+            let keys = [];
+
+            // Left half rows (0-3), 7 keys each
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 7; col++) {
+                    const keyData = layout.left[row]?.[col];
+                    keys.push(keyToQMK(keyData));
+                }
+            }
+
+            // Left thumb (4 keys)
+            for (let i = 0; i < 4; i++) {
+                const keyData = layout.leftThumb?.[i];
+                keys.push(keyToQMK(keyData));
+            }
+
+            // Right half rows (0-3), 7 keys each
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 7; col++) {
+                    const keyData = layout.right[row]?.[col];
+                    keys.push(keyToQMK(keyData));
+                }
+            }
+
+            // Right thumb (4 keys)
+            for (let i = 0; i < 4; i++) {
+                const keyData = layout.rightThumb?.[i];
+                keys.push(keyToQMK(keyData));
+            }
+
+            // Format as LAYOUT_moonlander
+            const layerComment = {
+                base: 'Base (Dvorak)',
+                altgr: 'AltGr (International)',
+                alt: 'Alt (Vi Motions)',
+                nav: 'Navigation',
+                symbol: 'Symbol',
+                fn: 'Fn/Media'
+            };
+
+            let output = `    /* ${layerComment[layerName] || layerName} */\n`;
+            output += `    [${layerNum}] = LAYOUT_moonlander(\n`;
+
+            // Format keys in rows for readability
+            // Left half: 4 rows of 7
+            output += '        // Left hand\n';
+            for (let row = 0; row < 4; row++) {
+                const start = row * 7;
+                const rowKeys = keys.slice(start, start + 7);
+                output += '        ' + rowKeys.map(k => k.padEnd(12)).join(', ') + ',\n';
+            }
+
+            // Left thumb: 4 keys
+            output += '        // Left thumb\n';
+            const leftThumb = keys.slice(28, 32);
+            output += '        ' + leftThumb.map(k => k.padEnd(12)).join(', ') + ',\n';
+
+            // Right half: 4 rows of 7
+            output += '        // Right hand\n';
+            for (let row = 0; row < 4; row++) {
+                const start = 32 + row * 7;
+                const rowKeys = keys.slice(start, start + 7);
+                output += '        ' + rowKeys.map(k => k.padEnd(12)).join(', ') + ',\n';
+            }
+
+            // Right thumb: 4 keys
+            output += '        // Right thumb\n';
+            const rightThumb = keys.slice(60, 64);
+            output += '        ' + rightThumb.map(k => k.padEnd(12)).join(', ') + '\n';
+
+            output += '    )';
+            return output;
+        }
+
+        function exportQMK() {
+            const layerOrder = ['base', 'nav', 'symbol', 'fn'];
+            const enumNames = ['BASE', 'NAV', 'SYMBOL', 'FN'];
+
+            let output = `/* Moonlander Dvorak Layout - Generated from Web Configurator */
+/* See: https://docs.qmk.fm/ for QMK documentation */
+
+#include QMK_KEYBOARD_H
+#include "version.h"
+
+enum layers {
+    ${enumNames.map((name, i) => `${name} = ${i}`).join(',\n    ')}
+};
+
+/* Custom keycodes */
+enum custom_keycodes {
+    VRSN = ML_SAFE_RANGE,
+};
+
+const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+`;
+
+            const layers = layerOrder.map((name, i) => generateQMKLayer(name, i));
+            output += layers.join(',\n\n');
+
+            output += `
+};
+
+/* RGB LED layout for reference (optional) */
+/*
+const uint8_t PROGMEM ledmap[][RGB_MATRIX_LED_COUNT][3] = {
+    // Add LED colors here if desired
+};
+*/
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case VRSN:
+            if (record->event.pressed) {
+                SEND_STRING(QMK_KEYBOARD "/" QMK_KEYMAP " @ " QMK_VERSION);
+            }
+            return false;
+    }
+    return true;
+}
+`;
+
+            const blob = new Blob([output], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'keymap.c';
             a.click();
             URL.revokeObjectURL(url);
         }
